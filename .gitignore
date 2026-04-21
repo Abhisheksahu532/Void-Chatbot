@@ -1,0 +1,33 @@
+# Environment variables
+.env
+.env.local
+
+# Node modules (if using JS)
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build folders
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.swp
+
+# Server
+modal_llm_server.py
