@@ -13,7 +13,7 @@ export default function ChatPage() {
   const [activeThreadId, setActiveThreadId] = useState(null);
   const { messages, addMessage } = useMessages(activeThreadId);
 
-  const [input, setInput] = useState('');
+  //const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [webSearch, setWebSearch] = useState(false);
   // ── FIX: safe mode ON by default ─────────────────────────────────────────
