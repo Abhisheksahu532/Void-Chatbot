@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAuth } from '../context/AuthContext';
 import { useThreads, useMessages } from '../hooks/useDB';
-import { chatCompletion, analyzeThread, uploadFileToModal, estimateTokens, estimateFileTokens, fetchContextInfo } from '../lib/api';
+import { chatCompletion, analyzeThread, uploadFileToModal, estimateTokens, estimateFileTokens, fetchContextInfo, pingEndpoint } from '../lib/api';
 
 export default function ChatPage() {
   const { user, signOut } = useAuth();
@@ -32,6 +32,7 @@ export default function ChatPage() {
   // Per-thread token cache — avoids recalculating for every thread in sidebar
   const [threadTokens, setThreadTokens] = useState({});
   const [showTokenTooltip, setShowTokenTooltip] = useState(false);
+  const [serverStatus, setServerStatus] = useState(null); // null = unknown, true = connected, false = disconnected
 
   const messagesEndRef = useRef(null);
   const fileInputRef   = useRef(null);
@@ -45,6 +46,20 @@ export default function ChatPage() {
   // Fetch context info from server on mount
   useEffect(() => {
     fetchContextInfo().catch(e => console.warn('[VOID] Context info fetch failed:', e));
+  }, []);
+
+  // Check server status on mount
+  useEffect(() => {
+    const checkStatus = async () => {
+      const endpoint = localStorage.getItem('void_endpoint') || process.env.REACT_APP_MODAL_ENDPOINT || '';
+      const apiKey = localStorage.getItem('void_api_key') || process.env.REACT_APP_API_KEY || '';
+      if (!endpoint || !apiKey) { setServerStatus(false); return; }
+      try {
+        await pingEndpoint(endpoint, apiKey);
+        setServerStatus(true);
+      } catch (e) { setServerStatus(false); }
+    };
+    checkStatus();
   }, []);
 
   // ── Token estimate — recomputes whenever messages, input, or files change ──
@@ -295,7 +310,10 @@ export default function ChatPage() {
         <div style={s.header}>
           <div style={s.headerLeft}>
             <button style={s.sidebarToggle} onClick={() => setSidebarOpen(p => !p)}>☰</button>
-            <div style={s.headerTitle}>{activeThread?.name || 'New Thread'}</div>
+            <div style={s.headerTitle}>
+              <span style={{...s.serverDot, background: serverStatus === true ? '#4fffb0' : serverStatus === false ? '#ff4444' : '#6a6a88'}} title={serverStatus === true ? 'Server connected' : serverStatus === false ? 'Server disconnected' : 'Checking...'}/>
+              <span>{activeThread?.name || 'New Thread'}</span>
+            </div>
           </div>
           <div style={s.headerRight}>
             <div style={isUnrestricted ? s.badgeUnsafe : s.badgeSafe}>
@@ -667,6 +685,7 @@ const s = {
   headerLeft:{display:'flex',alignItems:'center',gap:12},
   sidebarToggle:{background:'transparent',border:'none',color:C.muted,fontSize:18,cursor:'pointer',padding:'0 4px'},
   headerTitle:{fontFamily:C.display,fontWeight:600,fontSize:14,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:300},
+  serverDot:{width:8,height:8,borderRadius:'50%',display:'inline-block',marginRight:8},
   headerRight:{display:'flex',alignItems:'center',gap:8},
   badgeSafe:{background:'rgba(79,255,176,0.1)',border:`1px solid ${C.green}`,borderRadius:6,padding:'4px 10px',fontSize:10,color:C.green},
   badgeUnsafe:{background:'rgba(255,106,155,0.1)',border:`1px solid ${C.accent2}`,borderRadius:6,padding:'4px 10px',fontSize:10,color:C.accent2},

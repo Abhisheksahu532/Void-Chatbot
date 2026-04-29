@@ -395,7 +395,7 @@ ${transcript}`;
 export async function pingEndpoint(url, key) {
   const res = await fetch(`${url}/v1/models`, {
     headers: { 'X-API-Key': key },
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(420000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
